@@ -42,9 +42,14 @@ const upload = multer({
   }
 });
 
-// In-memory storage for jobs and candidates
+// In-memory storage for jobs, candidates, and search history
 const jobs = new Map();
 const candidates = new Map();
+const searchHistory = new Map();
+const comparisons = new Map();
+
+// Pipeline stages for candidate tracking
+const PIPELINE_STAGES = ['new', 'contacted', 'screening', 'interview', 'offer', 'hired', 'rejected'];
 
 // ============ JD PARSING ENGINE ============
 
@@ -827,6 +832,329 @@ app.get('/api/jobs/:jobId/export', (req, res) => {
     res.send(csv);
   } else {
     res.json({ candidates: jobCandidates });
+  }
+});
+
+// ============ CANDIDATE TRACKING (PIPELINE) ============
+
+// Update candidate pipeline stage
+app.patch('/api/candidates/:id/stage', (req, res) => {
+  const { id } = req.params;
+  const { stage } = req.body;
+
+  const candidate = candidates.get(id);
+  if (!candidate) {
+    return res.status(404).json({ error: 'Candidate not found' });
+  }
+
+  if (!PIPELINE_STAGES.includes(stage)) {
+    return res.status(400).json({ error: `Invalid stage. Must be one of: ${PIPELINE_STAGES.join(', ')}` });
+  }
+
+  candidate.stage = stage;
+  candidate.stageHistory = candidate.stageHistory || [];
+  candidate.stageHistory.push({
+    stage,
+    timestamp: new Date().toISOString()
+  });
+
+  candidates.set(id, candidate);
+  res.json({ success: true, candidate });
+});
+
+// Add notes to candidate
+app.post('/api/candidates/:id/notes', (req, res) => {
+  const { id } = req.params;
+  const { note } = req.body;
+
+  const candidate = candidates.get(id);
+  if (!candidate) {
+    return res.status(404).json({ error: 'Candidate not found' });
+  }
+
+  candidate.notes = candidate.notes || [];
+  candidate.notes.push({
+    id: uuidv4(),
+    text: note,
+    timestamp: new Date().toISOString()
+  });
+
+  candidates.set(id, candidate);
+  res.json({ success: true, candidate });
+});
+
+// Toggle shortlist/favorite
+app.patch('/api/candidates/:id/shortlist', (req, res) => {
+  const { id } = req.params;
+
+  const candidate = candidates.get(id);
+  if (!candidate) {
+    return res.status(404).json({ error: 'Candidate not found' });
+  }
+
+  candidate.shortlisted = !candidate.shortlisted;
+  candidates.set(id, candidate);
+  res.json({ success: true, candidate });
+});
+
+// Get pipeline summary for a job
+app.get('/api/jobs/:jobId/pipeline', (req, res) => {
+  const jobCandidates = Array.from(candidates.values())
+    .filter(c => c.jobId === req.params.jobId);
+
+  const pipeline = {};
+  for (const stage of PIPELINE_STAGES) {
+    pipeline[stage] = jobCandidates.filter(c => (c.stage || 'new') === stage);
+  }
+
+  res.json({
+    pipeline,
+    stages: PIPELINE_STAGES,
+    total: jobCandidates.length
+  });
+});
+
+// ============ BULK RESUME UPLOAD ============
+
+app.post('/api/jobs/:jobId/bulk-upload', upload.array('resumes', 50), async (req, res) => {
+  try {
+    const job = jobs.get(req.params.jobId);
+    if (!job) {
+      return res.status(404).json({ error: 'Job not found' });
+    }
+
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: 'No files uploaded' });
+    }
+
+    const results = [];
+    const errors = [];
+
+    for (const file of req.files) {
+      try {
+        const filePath = file.path;
+        let text = '';
+        let candidateName = file.originalname.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+
+        const ext = path.extname(file.originalname).toLowerCase();
+        if (ext === '.txt') {
+          text = fs.readFileSync(filePath, 'utf-8');
+        } else if (ext === '.pdf') {
+          // Try to parse PDF
+          try {
+            const pdfParse = require('pdf-parse');
+            const dataBuffer = fs.readFileSync(filePath);
+            const pdfData = await pdfParse(dataBuffer);
+            text = pdfData.text;
+          } catch (e) {
+            text = `Resume content from ${file.originalname}`;
+          }
+        } else {
+          text = `Resume content from ${file.originalname}`;
+        }
+
+        // Try to extract name from resume text
+        const nameMatch = text.match(/^([A-Z][a-z]+ [A-Z][a-z]+)/m);
+        if (nameMatch) {
+          candidateName = nameMatch[1];
+        }
+
+        const candidateData = {
+          id: uuidv4(),
+          name: candidateName,
+          resumeFile: file.filename,
+          resumeText: text.substring(0, 5000), // Limit text length
+          skills: extractSkills(text),
+          source: 'Bulk Resume Upload',
+          stage: 'new'
+        };
+
+        // Try to extract experience from resume
+        const expMatch = text.match(/(\d+)\+?\s*years?/i);
+        if (expMatch) {
+          candidateData.yearsOfExperience = parseInt(expMatch[1]);
+        }
+
+        const rating = rateCandidate(candidateData, job);
+        const ratedCandidate = {
+          ...candidateData,
+          jobId: job.id,
+          rating: rating.overallScore,
+          stars: rating.rating,
+          recommendation: rating.recommendation,
+          scores: rating.scores,
+          analysis: rating.analysis
+        };
+
+        candidates.set(ratedCandidate.id, ratedCandidate);
+        results.push(ratedCandidate);
+      } catch (fileError) {
+        errors.push({
+          file: file.originalname,
+          error: fileError.message
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      processed: results.length,
+      failed: errors.length,
+      candidates: results.sort((a, b) => b.rating - a.rating),
+      errors
+    });
+  } catch (error) {
+    console.error('Bulk upload error:', error);
+    res.status(500).json({ error: 'Failed to process resumes' });
+  }
+});
+
+// ============ COMPARE CANDIDATES ============
+
+// Create comparison
+app.post('/api/compare', (req, res) => {
+  const { candidateIds } = req.body;
+
+  if (!candidateIds || candidateIds.length < 2) {
+    return res.status(400).json({ error: 'At least 2 candidates required for comparison' });
+  }
+
+  if (candidateIds.length > 5) {
+    return res.status(400).json({ error: 'Maximum 5 candidates can be compared at once' });
+  }
+
+  const comparisonCandidates = candidateIds.map(id => candidates.get(id)).filter(Boolean);
+
+  if (comparisonCandidates.length !== candidateIds.length) {
+    return res.status(404).json({ error: 'Some candidates not found' });
+  }
+
+  // Get the job for context
+  const jobId = comparisonCandidates[0].jobId;
+  const job = jobs.get(jobId);
+
+  const comparison = {
+    id: uuidv4(),
+    createdAt: new Date().toISOString(),
+    candidates: comparisonCandidates,
+    job: job ? { id: job.id, title: job.title } : null,
+    comparison: generateComparisonAnalysis(comparisonCandidates, job)
+  };
+
+  comparisons.set(comparison.id, comparison);
+  res.json({ success: true, comparison });
+});
+
+function generateComparisonAnalysis(candidateList, job) {
+  const analysis = {
+    summary: {},
+    skillsMatrix: {},
+    rankings: {}
+  };
+
+  // Skills matrix
+  const allSkills = new Set();
+  candidateList.forEach(c => (c.skills || []).forEach(s => allSkills.add(s)));
+
+  analysis.skillsMatrix = Array.from(allSkills).map(skill => ({
+    skill,
+    candidates: candidateList.map(c => ({
+      id: c.id,
+      name: c.name,
+      hasSkill: (c.skills || []).some(s => s.toLowerCase() === skill.toLowerCase())
+    }))
+  }));
+
+  // Rankings
+  analysis.rankings = {
+    byOverallScore: [...candidateList].sort((a, b) => b.rating - a.rating).map((c, i) => ({
+      rank: i + 1, id: c.id, name: c.name, score: c.rating
+    })),
+    byExperience: [...candidateList].sort((a, b) => (b.yearsOfExperience || 0) - (a.yearsOfExperience || 0)).map((c, i) => ({
+      rank: i + 1, id: c.id, name: c.name, years: c.yearsOfExperience || 0
+    })),
+    bySkillsMatch: [...candidateList].sort((a, b) => (b.scores?.skillsMatch || 0) - (a.scores?.skillsMatch || 0)).map((c, i) => ({
+      rank: i + 1, id: c.id, name: c.name, score: c.scores?.skillsMatch || 0
+    }))
+  };
+
+  // Summary
+  const bestOverall = analysis.rankings.byOverallScore[0];
+  const mostExperienced = analysis.rankings.byExperience[0];
+
+  analysis.summary = {
+    bestOverall: { id: bestOverall.id, name: bestOverall.name, reason: `Highest overall score (${bestOverall.score})` },
+    mostExperienced: { id: mostExperienced.id, name: mostExperienced.name, reason: `${mostExperienced.years} years of experience` },
+    recommendation: bestOverall.id === mostExperienced.id
+      ? `${bestOverall.name} is the clear top choice with both the highest score and most experience.`
+      : `${bestOverall.name} has the best overall match, while ${mostExperienced.name} brings the most experience.`
+  };
+
+  return analysis;
+}
+
+// ============ SEARCH HISTORY ============
+
+// Save search
+app.post('/api/search-history', (req, res) => {
+  const { jobId, name } = req.body;
+
+  const job = jobs.get(jobId);
+  if (!job) {
+    return res.status(404).json({ error: 'Job not found' });
+  }
+
+  const candidateCount = Array.from(candidates.values()).filter(c => c.jobId === jobId).length;
+
+  const historyEntry = {
+    id: uuidv4(),
+    name: name || job.title,
+    jobId: job.id,
+    job: {
+      id: job.id,
+      title: job.title,
+      requiredSkills: job.requiredSkills,
+      experience: job.experience
+    },
+    candidateCount,
+    createdAt: new Date().toISOString()
+  };
+
+  searchHistory.set(historyEntry.id, historyEntry);
+  res.json({ success: true, entry: historyEntry });
+});
+
+// Get search history
+app.get('/api/search-history', (req, res) => {
+  const history = Array.from(searchHistory.values())
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  res.json({ history });
+});
+
+// Load search from history
+app.get('/api/search-history/:id', (req, res) => {
+  const entry = searchHistory.get(req.params.id);
+  if (!entry) {
+    return res.status(404).json({ error: 'Search history not found' });
+  }
+
+  const job = jobs.get(entry.jobId);
+  const jobCandidates = Array.from(candidates.values()).filter(c => c.jobId === entry.jobId);
+
+  res.json({
+    entry,
+    job,
+    candidates: jobCandidates.sort((a, b) => b.rating - a.rating)
+  });
+});
+
+// Delete search history entry
+app.delete('/api/search-history/:id', (req, res) => {
+  if (searchHistory.has(req.params.id)) {
+    searchHistory.delete(req.params.id);
+    res.json({ success: true });
+  } else {
+    res.status(404).json({ error: 'Entry not found' });
   }
 });
 

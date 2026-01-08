@@ -779,6 +779,198 @@
       width: 16px;
       height: 16px;
     }
+
+    /* Upload Zone */
+    .upload-zone {
+      border: 2px dashed var(--gray-300);
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color: var(--primary);
+      background: rgba(99, 102, 241, 0.05);
+    }
+
+    /* Pipeline Stages */
+    .stage-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stage-new { background: #e0e7ff; color: #3730a3; }
+    .stage-contacted { background: #fef3c7; color: #92400e; }
+    .stage-screening { background: #dbeafe; color: #1e40af; }
+    .stage-interview { background: #ede9fe; color: #5b21b6; }
+    .stage-offer { background: #d1fae5; color: #065f46; }
+    .stage-hired { background: #10b981; color: white; }
+    .stage-rejected { background: #fee2e2; color: #991b1b; }
+
+    /* Candidate Selection */
+    .candidate-card.selected {
+      border: 2px solid var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+
+    .candidate-checkbox {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      border: 2px solid var(--gray-300);
+      background: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .candidate-checkbox:hover {
+      border-color: var(--primary);
+    }
+
+    .candidate-checkbox.checked {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+
+    /* Shortlist Star */
+    .shortlist-btn {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: var(--gray-300);
+      transition: all 0.2s;
+    }
+
+    .shortlist-btn:hover, .shortlist-btn.active {
+      color: #fbbf24;
+      transform: scale(1.1);
+    }
+
+    /* History Item */
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--gray-100);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .history-item:hover {
+      background: var(--gray-50);
+    }
+
+    .history-item:last-child {
+      border-bottom: none;
+    }
+
+    .history-item-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-800);
+    }
+
+    .history-item-meta {
+      font-size: 11px;
+      color: var(--gray-400);
+    }
+
+    .history-item-delete {
+      opacity: 0;
+      color: var(--danger);
+      cursor: pointer;
+    }
+
+    .history-item:hover .history-item-delete {
+      opacity: 1;
+    }
+
+    /* Compare Table */
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .compare-table th, .compare-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .compare-table th {
+      background: var(--gray-50);
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--gray-600);
+    }
+
+    .compare-table td {
+      font-size: 14px;
+    }
+
+    .compare-winner {
+      background: rgba(16, 185, 129, 0.1);
+    }
+
+    /* Stage Dropdown */
+    .stage-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .stage-dropdown-menu {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      z-index: 100;
+      min-width: 150px;
+      display: none;
+    }
+
+    .stage-dropdown-menu.show {
+      display: block;
+    }
+
+    .stage-dropdown-item {
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stage-dropdown-item:hover {
+      background: var(--gray-50);
+    }
+
+    .stage-dropdown-item:first-child {
+      border-radius: 8px 8px 0 0;
+    }
+
+    .stage-dropdown-item:last-child {
+      border-radius: 0 0 8px 8px;
+    }
   </style>
 </head>
 <body>
@@ -926,14 +1118,49 @@ Requirements:
           </div>
         </div>
 
+        <!-- Bulk Resume Upload -->
+        <div class="card" style="margin-top: 20px;" id="bulk-upload-section">
+          <div class="card-header">
+            <h2><i class="fas fa-file-upload"></i> Bulk Resume Upload</h2>
+          </div>
+          <div class="upload-zone" id="upload-zone">
+            <i class="fas fa-cloud-upload-alt" style="font-size: 32px; color: var(--gray-400); margin-bottom: 12px;"></i>
+            <p style="color: var(--gray-600); margin-bottom: 8px;">Drag & drop resumes here</p>
+            <p style="color: var(--gray-400); font-size: 12px;">PDF, DOC, DOCX, TXT (max 50 files)</p>
+            <input type="file" id="bulk-file-input" multiple accept=".pdf,.doc,.docx,.txt" style="display: none;">
+            <button class="btn btn-secondary" style="margin-top: 12px;" onclick="document.getElementById('bulk-file-input').click()">
+              <i class="fas fa-folder-open"></i> Browse Files
+            </button>
+          </div>
+          <div id="upload-progress" style="display: none; margin-top: 12px;">
+            <div style="background: var(--gray-200); border-radius: 4px; height: 8px; overflow: hidden;">
+              <div id="upload-progress-bar" style="background: var(--primary); height: 100%; width: 0%; transition: width 0.3s;"></div>
+            </div>
+            <p id="upload-status" style="font-size: 13px; color: var(--gray-500); margin-top: 8px;"></p>
+          </div>
+        </div>
+
         <!-- Add Candidate Manually -->
-        <div class="card" style="margin-top: 20px;" id="manual-add-section" style="display: none;">
+        <div class="card" style="margin-top: 20px;" id="manual-add-section">
           <div class="card-header">
             <h2><i class="fas fa-user-plus"></i> Add Candidate Manually</h2>
           </div>
           <button class="btn btn-secondary btn-block" id="add-manual-btn">
             <i class="fas fa-plus"></i> Add Candidate
           </button>
+        </div>
+
+        <!-- Search History -->
+        <div class="card" style="margin-top: 20px;" id="history-section">
+          <div class="card-header">
+            <h2><i class="fas fa-history"></i> Search History</h2>
+            <button class="btn btn-secondary" id="save-search-btn" style="padding: 6px 12px; font-size: 12px;" disabled>
+              <i class="fas fa-save"></i> Save Current
+            </button>
+          </div>
+          <div id="history-list" style="max-height: 200px; overflow-y: auto;">
+            <p style="color: var(--gray-400); font-size: 13px; text-align: center; padding: 20px;">No saved searches yet</p>
+          </div>
         </div>
       </div>
 
@@ -989,12 +1216,33 @@ Requirements:
                 <option value="70">Recommended (70+)</option>
                 <option value="55">Consider (55+)</option>
               </select>
+              <select id="stage-filter">
+                <option value="">All Stages</option>
+                <option value="new">New</option>
+                <option value="contacted">Contacted</option>
+                <option value="screening">Screening</option>
+                <option value="interview">Interview</option>
+                <option value="offer">Offer</option>
+                <option value="hired">Hired</option>
+                <option value="rejected">Rejected</option>
+              </select>
               <select id="sort-filter">
                 <option value="rating-desc">Rating (High to Low)</option>
                 <option value="rating-asc">Rating (Low to High)</option>
                 <option value="experience-desc">Experience (Most)</option>
                 <option value="experience-asc">Experience (Least)</option>
               </select>
+            </div>
+            <div class="filter-bar" style="margin-top: 12px;">
+              <button class="btn btn-primary" id="compare-btn" disabled>
+                <i class="fas fa-columns"></i> Compare Selected (<span id="compare-count">0</span>)
+              </button>
+              <button class="btn btn-secondary" id="select-all-btn">
+                <i class="fas fa-check-double"></i> Select Top 5
+              </button>
+              <button class="btn btn-secondary" id="clear-selection-btn">
+                <i class="fas fa-times"></i> Clear Selection
+              </button>
               <button class="btn btn-success" id="export-btn">
                 <i class="fas fa-download"></i> Export CSV
               </button>
@@ -1077,10 +1325,25 @@ Requirements:
     </div>
   </div>
 
+  <!-- Compare Modal -->
+  <div class="modal-overlay" id="compare-modal">
+    <div class="modal" style="max-width: 1000px;">
+      <div class="modal-header">
+        <h3><i class="fas fa-columns"></i> Compare Candidates</h3>
+        <button class="modal-close" onclick="closeCompareModal()">&times;</button>
+      </div>
+      <div id="compare-content">
+        <!-- Comparison will be rendered here -->
+      </div>
+    </div>
+  </div>
+
   <script>
     // State
     let currentJob = null;
     let allCandidates = [];
+    let selectedCandidates = new Set();
+    let searchHistoryList = [];
 
     // API Base URL
     const API_URL = '';
@@ -1114,8 +1377,43 @@ Requirements:
     document.getElementById('linkedin-logout-btn').addEventListener('click', linkedinLogout);
     document.getElementById('linkedin-search-btn').addEventListener('click', linkedinSearch);
 
-    // Check LinkedIn status on load
+    // New Feature Event Listeners
+    document.getElementById('stage-filter').addEventListener('change', filterCandidates);
+    document.getElementById('compare-btn').addEventListener('click', compareCandidates);
+    document.getElementById('select-all-btn').addEventListener('click', selectTopFive);
+    document.getElementById('clear-selection-btn').addEventListener('click', clearSelection);
+    document.getElementById('save-search-btn').addEventListener('click', saveSearch);
+
+    // Bulk Upload
+    const uploadZone = document.getElementById('upload-zone');
+    const bulkFileInput = document.getElementById('bulk-file-input');
+
+    uploadZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadZone.classList.add('drag-over');
+    });
+
+    uploadZone.addEventListener('dragleave', () => {
+      uploadZone.classList.remove('drag-over');
+    });
+
+    uploadZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadZone.classList.remove('drag-over');
+      if (e.dataTransfer.files.length > 0) {
+        handleBulkUpload(e.dataTransfer.files);
+      }
+    });
+
+    bulkFileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        handleBulkUpload(e.target.files);
+      }
+    });
+
+    // Check LinkedIn status and load search history on load
     checkLinkedInStatus();
+    loadSearchHistory();
 
     // LinkedIn Functions
     async function checkLinkedInStatus() {
@@ -1342,12 +1640,16 @@ Requirements:
     // Display Results
     function displayResults(data) {
       resultsContainer.style.display = 'block';
+      initialState.style.display = 'none';
 
       // Update stats
       document.getElementById('stat-excellent').textContent = data.summary.highlyRecommended;
       document.getElementById('stat-good').textContent = data.summary.recommended;
       document.getElementById('stat-average').textContent = data.summary.consider;
       document.getElementById('stat-poor').textContent = data.summary.notRecommended;
+
+      // Enable save search button
+      document.getElementById('save-search-btn').disabled = false;
 
       renderCandidates(data.candidates);
     }
@@ -1386,17 +1688,44 @@ Requirements:
           .map(w => `<li>${w.detail}</li>`)
           .join('');
 
+        const isSelected = selectedCandidates.has(candidate.id);
+        const stage = candidate.stage || 'new';
+
         const card = document.createElement('div');
-        card.className = 'candidate-card';
+        card.className = `candidate-card ${isSelected ? 'selected' : ''}`;
+        card.style.position = 'relative';
         card.innerHTML = `
+          <div class="candidate-checkbox ${isSelected ? 'checked' : ''}" onclick="toggleCandidateSelection('${candidate.id}')">
+            ${isSelected ? '<i class="fas fa-check"></i>' : ''}
+          </div>
+
           <div class="candidate-header">
             <div class="candidate-info">
-              <div class="candidate-name">${candidate.name}</div>
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                <div class="candidate-name">${candidate.name}</div>
+                <button class="shortlist-btn ${candidate.shortlisted ? 'active' : ''}" onclick="toggleShortlist('${candidate.id}')" title="Shortlist">
+                  <i class="fas fa-star"></i>
+                </button>
+              </div>
               <div class="candidate-headline">${candidate.headline || 'No headline'}</div>
               <div class="candidate-meta">
                 <span><i class="fas fa-briefcase"></i> ${candidate.yearsOfExperience || 0} years</span>
                 <span><i class="fas fa-map-marker-alt"></i> ${candidate.location || 'Unknown'}</span>
                 <span><i class="fas fa-globe"></i> ${candidate.source}</span>
+                <span class="stage-dropdown">
+                  <span class="stage-badge stage-${stage}" onclick="toggleStageDropdown('${candidate.id}')" style="cursor: pointer;">
+                    ${stage} <i class="fas fa-chevron-down" style="font-size: 8px; margin-left: 4px;"></i>
+                  </span>
+                  <div class="stage-dropdown-menu" id="stage-menu-${candidate.id}">
+                    <div class="stage-dropdown-item" onclick="updateCandidateStage('${candidate.id}', 'new')"><span class="stage-badge stage-new">New</span></div>
+                    <div class="stage-dropdown-item" onclick="updateCandidateStage('${candidate.id}', 'contacted')"><span class="stage-badge stage-contacted">Contacted</span></div>
+                    <div class="stage-dropdown-item" onclick="updateCandidateStage('${candidate.id}', 'screening')"><span class="stage-badge stage-screening">Screening</span></div>
+                    <div class="stage-dropdown-item" onclick="updateCandidateStage('${candidate.id}', 'interview')"><span class="stage-badge stage-interview">Interview</span></div>
+                    <div class="stage-dropdown-item" onclick="updateCandidateStage('${candidate.id}', 'offer')"><span class="stage-badge stage-offer">Offer</span></div>
+                    <div class="stage-dropdown-item" onclick="updateCandidateStage('${candidate.id}', 'hired')"><span class="stage-badge stage-hired">Hired</span></div>
+                    <div class="stage-dropdown-item" onclick="updateCandidateStage('${candidate.id}', 'rejected')"><span class="stage-badge stage-rejected">Rejected</span></div>
+                  </div>
+                </span>
               </div>
             </div>
             <div class="rating-badge">
@@ -1443,10 +1772,25 @@ Requirements:
       });
     }
 
+    function toggleStageDropdown(candidateId) {
+      // Close all other dropdowns
+      document.querySelectorAll('.stage-dropdown-menu.show').forEach(m => m.classList.remove('show'));
+      const menu = document.getElementById(`stage-menu-${candidateId}`);
+      menu.classList.toggle('show');
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.stage-dropdown')) {
+        document.querySelectorAll('.stage-dropdown-menu.show').forEach(m => m.classList.remove('show'));
+      }
+    });
+
     // Filter Candidates
     function filterCandidates() {
       const searchTerm = document.getElementById('search-filter').value.toLowerCase();
       const minRating = parseInt(document.getElementById('rating-filter').value) || 0;
+      const stageFilter = document.getElementById('stage-filter').value;
       const sortValue = document.getElementById('sort-filter').value;
 
       let filtered = allCandidates.filter(c => {
@@ -1456,8 +1800,9 @@ Requirements:
           (c.skills || []).some(s => s.toLowerCase().includes(searchTerm));
 
         const matchesRating = c.rating >= minRating;
+        const matchesStage = !stageFilter || (c.stage || 'new') === stageFilter;
 
-        return matchesSearch && matchesRating;
+        return matchesSearch && matchesRating && matchesStage;
       });
 
       // Sort
@@ -1686,6 +2031,356 @@ Requirements:
         document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
       }
     });
+
+    // ============ BULK UPLOAD FUNCTIONS ============
+
+    async function handleBulkUpload(files) {
+      if (!currentJob) {
+        alert('Please parse a job description first');
+        return;
+      }
+
+      const formData = new FormData();
+      for (let i = 0; i < Math.min(files.length, 50); i++) {
+        formData.append('resumes', files[i]);
+      }
+
+      const progressDiv = document.getElementById('upload-progress');
+      const progressBar = document.getElementById('upload-progress-bar');
+      const statusText = document.getElementById('upload-status');
+
+      progressDiv.style.display = 'block';
+      progressBar.style.width = '0%';
+      statusText.textContent = `Uploading ${files.length} files...`;
+
+      try {
+        const response = await fetch(`${API_URL}/api/jobs/${currentJob.id}/bulk-upload`, {
+          method: 'POST',
+          body: formData
+        });
+
+        progressBar.style.width = '100%';
+        const data = await response.json();
+
+        if (data.success) {
+          statusText.textContent = `Processed ${data.processed} resumes, ${data.failed} failed`;
+
+          // Add to candidates
+          data.candidates.forEach(c => {
+            const existingIndex = allCandidates.findIndex(ec => ec.id === c.id);
+            if (existingIndex === -1) {
+              allCandidates.push(c);
+            }
+          });
+
+          allCandidates.sort((a, b) => b.rating - a.rating);
+          displayResults({
+            candidates: allCandidates,
+            summary: {
+              highlyRecommended: allCandidates.filter(c => c.rating >= 85).length,
+              recommended: allCandidates.filter(c => c.rating >= 70 && c.rating < 85).length,
+              consider: allCandidates.filter(c => c.rating >= 55 && c.rating < 70).length,
+              notRecommended: allCandidates.filter(c => c.rating < 55).length
+            }
+          });
+
+          setTimeout(() => {
+            progressDiv.style.display = 'none';
+          }, 3000);
+        } else {
+          statusText.textContent = data.error || 'Upload failed';
+        }
+      } catch (error) {
+        statusText.textContent = 'Upload failed. Please try again.';
+        console.error('Upload error:', error);
+      }
+    }
+
+    // ============ CANDIDATE SELECTION & COMPARE ============
+
+    function toggleCandidateSelection(candidateId) {
+      if (selectedCandidates.has(candidateId)) {
+        selectedCandidates.delete(candidateId);
+      } else {
+        if (selectedCandidates.size >= 5) {
+          alert('Maximum 5 candidates can be selected for comparison');
+          return;
+        }
+        selectedCandidates.add(candidateId);
+      }
+      updateSelectionUI();
+      renderCandidates(allCandidates);
+    }
+
+    function updateSelectionUI() {
+      const count = selectedCandidates.size;
+      document.getElementById('compare-count').textContent = count;
+      document.getElementById('compare-btn').disabled = count < 2;
+    }
+
+    function selectTopFive() {
+      selectedCandidates.clear();
+      const top5 = [...allCandidates].sort((a, b) => b.rating - a.rating).slice(0, 5);
+      top5.forEach(c => selectedCandidates.add(c.id));
+      updateSelectionUI();
+      filterCandidates();
+    }
+
+    function clearSelection() {
+      selectedCandidates.clear();
+      updateSelectionUI();
+      filterCandidates();
+    }
+
+    async function compareCandidates() {
+      if (selectedCandidates.size < 2) {
+        alert('Please select at least 2 candidates to compare');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/api/compare`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ candidateIds: Array.from(selectedCandidates) })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showCompareModal(data.comparison);
+        } else {
+          alert(data.error || 'Comparison failed');
+        }
+      } catch (error) {
+        console.error('Compare error:', error);
+        alert('Failed to compare candidates');
+      }
+    }
+
+    function showCompareModal(comparison) {
+      const modal = document.getElementById('compare-modal');
+      const content = document.getElementById('compare-content');
+
+      const candidates = comparison.candidates;
+      const analysis = comparison.comparison;
+
+      let html = `
+        <div style="background: var(--gray-50); padding: 16px; border-radius: 10px; margin-bottom: 20px;">
+          <h4 style="margin-bottom: 8px;"><i class="fas fa-trophy" style="color: var(--success);"></i> Recommendation</h4>
+          <p style="color: var(--gray-700);">${analysis.summary.recommendation}</p>
+        </div>
+
+        <h4 style="margin-bottom: 12px;">Overall Comparison</h4>
+        <table class="compare-table">
+          <tr>
+            <th>Attribute</th>
+            ${candidates.map(c => `<th>${c.name}</th>`).join('')}
+          </tr>
+          <tr>
+            <td><strong>Overall Score</strong></td>
+            ${candidates.map((c, i) => {
+              const isWinner = analysis.rankings.byOverallScore[0].id === c.id;
+              return `<td class="${isWinner ? 'compare-winner' : ''}">${c.rating}/100 ${isWinner ? '👑' : ''}</td>`;
+            }).join('')}
+          </tr>
+          <tr>
+            <td><strong>Experience</strong></td>
+            ${candidates.map((c, i) => {
+              const isWinner = analysis.rankings.byExperience[0].id === c.id;
+              return `<td class="${isWinner ? 'compare-winner' : ''}">${c.yearsOfExperience || 0} years ${isWinner ? '👑' : ''}</td>`;
+            }).join('')}
+          </tr>
+          <tr>
+            <td><strong>Skills Match</strong></td>
+            ${candidates.map((c, i) => {
+              const isWinner = analysis.rankings.bySkillsMatch[0].id === c.id;
+              return `<td class="${isWinner ? 'compare-winner' : ''}">${c.scores?.skillsMatch || 0}% ${isWinner ? '👑' : ''}</td>`;
+            }).join('')}
+          </tr>
+          <tr>
+            <td><strong>Education</strong></td>
+            ${candidates.map(c => `<td>${c.education?.level || 'N/A'}</td>`).join('')}
+          </tr>
+          <tr>
+            <td><strong>Location</strong></td>
+            ${candidates.map(c => `<td>${c.location || 'N/A'}</td>`).join('')}
+          </tr>
+          <tr>
+            <td><strong>Stage</strong></td>
+            ${candidates.map(c => `<td><span class="stage-badge stage-${c.stage || 'new'}">${c.stage || 'new'}</span></td>`).join('')}
+          </tr>
+        </table>
+
+        <h4 style="margin: 20px 0 12px;">Skills Comparison</h4>
+        <div style="max-height: 300px; overflow-y: auto;">
+          <table class="compare-table">
+            <tr>
+              <th>Skill</th>
+              ${candidates.map(c => `<th>${c.name}</th>`).join('')}
+            </tr>
+            ${analysis.skillsMatrix.slice(0, 20).map(row => `
+              <tr>
+                <td>${row.skill}</td>
+                ${row.candidates.map(c => `<td>${c.hasSkill ? '<i class="fas fa-check" style="color: var(--success);"></i>' : '<i class="fas fa-times" style="color: var(--gray-300);"></i>'}</td>`).join('')}
+              </tr>
+            `).join('')}
+          </table>
+        </div>
+      `;
+
+      content.innerHTML = html;
+      modal.classList.add('active');
+    }
+
+    function closeCompareModal() {
+      document.getElementById('compare-modal').classList.remove('active');
+    }
+
+    // ============ CANDIDATE STAGE MANAGEMENT ============
+
+    async function updateCandidateStage(candidateId, stage) {
+      try {
+        const response = await fetch(`${API_URL}/api/candidates/${candidateId}/stage`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ stage })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Update local data
+          const candidate = allCandidates.find(c => c.id === candidateId);
+          if (candidate) {
+            candidate.stage = stage;
+          }
+          filterCandidates();
+        } else {
+          alert(data.error || 'Failed to update stage');
+        }
+      } catch (error) {
+        console.error('Stage update error:', error);
+      }
+    }
+
+    async function toggleShortlist(candidateId) {
+      try {
+        const response = await fetch(`${API_URL}/api/candidates/${candidateId}/shortlist`, {
+          method: 'PATCH'
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          const candidate = allCandidates.find(c => c.id === candidateId);
+          if (candidate) {
+            candidate.shortlisted = data.candidate.shortlisted;
+          }
+          filterCandidates();
+        }
+      } catch (error) {
+        console.error('Shortlist error:', error);
+      }
+    }
+
+    // ============ SEARCH HISTORY ============
+
+    async function loadSearchHistory() {
+      try {
+        const response = await fetch(`${API_URL}/api/search-history`);
+        const data = await response.json();
+        searchHistoryList = data.history || [];
+        renderSearchHistory();
+      } catch (error) {
+        console.log('Could not load search history');
+      }
+    }
+
+    function renderSearchHistory() {
+      const container = document.getElementById('history-list');
+
+      if (searchHistoryList.length === 0) {
+        container.innerHTML = '<p style="color: var(--gray-400); font-size: 13px; text-align: center; padding: 20px;">No saved searches yet</p>';
+        return;
+      }
+
+      container.innerHTML = searchHistoryList.map(entry => `
+        <div class="history-item" onclick="loadFromHistory('${entry.id}')">
+          <div>
+            <div class="history-item-title">${entry.name}</div>
+            <div class="history-item-meta">${entry.candidateCount} candidates • ${new Date(entry.createdAt).toLocaleDateString()}</div>
+          </div>
+          <i class="fas fa-trash history-item-delete" onclick="event.stopPropagation(); deleteHistoryEntry('${entry.id}')"></i>
+        </div>
+      `).join('');
+    }
+
+    async function saveSearch() {
+      if (!currentJob) {
+        alert('No active search to save');
+        return;
+      }
+
+      const name = prompt('Enter a name for this search:', currentJob.title);
+      if (!name) return;
+
+      try {
+        const response = await fetch(`${API_URL}/api/search-history`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jobId: currentJob.id, name })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          searchHistoryList.unshift(data.entry);
+          renderSearchHistory();
+          alert('Search saved!');
+        }
+      } catch (error) {
+        console.error('Save search error:', error);
+      }
+    }
+
+    async function loadFromHistory(entryId) {
+      try {
+        const response = await fetch(`${API_URL}/api/search-history/${entryId}`);
+        const data = await response.json();
+
+        if (data.job && data.candidates) {
+          currentJob = data.job;
+          allCandidates = data.candidates;
+          displayParsedJob(data.job);
+          displayResults({
+            candidates: data.candidates,
+            summary: {
+              highlyRecommended: data.candidates.filter(c => c.rating >= 85).length,
+              recommended: data.candidates.filter(c => c.rating >= 70 && c.rating < 85).length,
+              consider: data.candidates.filter(c => c.rating >= 55 && c.rating < 70).length,
+              notRecommended: data.candidates.filter(c => c.rating < 55).length
+            }
+          });
+          searchSection.style.display = 'block';
+          document.getElementById('save-search-btn').disabled = false;
+        }
+      } catch (error) {
+        console.error('Load history error:', error);
+      }
+    }
+
+    async function deleteHistoryEntry(entryId) {
+      if (!confirm('Delete this saved search?')) return;
+
+      try {
+        await fetch(`${API_URL}/api/search-history/${entryId}`, { method: 'DELETE' });
+        searchHistoryList = searchHistoryList.filter(e => e.id !== entryId);
+        renderSearchHistory();
+      } catch (error) {
+        console.error('Delete history error:', error);
+      }
+    }
   </script>
 </body>
 </html>

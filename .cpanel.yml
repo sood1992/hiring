@@ -1,0 +1,8 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/$USER/public_html/jd-finder
+    - /bin/mkdir -p $DEPLOYPATH
+    - /bin/cp -R * $DEPLOYPATH/
+    - cd $DEPLOYPATH && /usr/local/bin/npm install --production
+    - touch $DEPLOYPATH/tmp/restart.txt
