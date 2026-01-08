@@ -1202,7 +1202,7 @@ app.post('/api/linkedin/login', async (req, res) => {
       await linkedInScraper.close();
     }
 
-    linkedInScraper = new LinkedInScraper({ headless: false });
+    linkedInScraper = new LinkedInScraper({ headless: true });
     await linkedInScraper.init();
 
     // Check if already logged in via cookies

@@ -24,7 +24,7 @@ class LinkedInScraper {
     this.context = null;
     this.page = null;
     this.options = {
-      headless: false, // Set to false to reduce detection
+      headless: true, // Must be true on servers without display
       slowMo: 100, // Slow down actions to appear more human
       ...options
     };
