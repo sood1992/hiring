@@ -1,0 +1,1463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JD Candidate Finder - AI-Powered Recruiting</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --primary-light: #818cf8;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: var(--gray-800);
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* Header */
+    .header {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 24px 32px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--gray-900);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header h1 i {
+      color: var(--primary);
+    }
+
+    .header p {
+      color: var(--gray-500);
+      margin-top: 8px;
+    }
+
+    /* Main Grid */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 400px 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 1024px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Cards */
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .card-header h2 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--gray-800);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-header h2 i {
+      color: var(--primary);
+    }
+
+    /* Form Elements */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--gray-700);
+      margin-bottom: 8px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 300px;
+      padding: 16px;
+      border: 2px solid var(--gray-200);
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 14px;
+      line-height: 1.6;
+      resize: vertical;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid var(--gray-200);
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 14px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-secondary {
+      background: var(--gray-100);
+      color: var(--gray-700);
+    }
+
+    .btn-secondary:hover {
+      background: var(--gray-200);
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+
+    .btn-block {
+      width: 100%;
+    }
+
+    /* Parsed JD Display */
+    .parsed-jd {
+      background: var(--gray-50);
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    .parsed-section {
+      margin-bottom: 16px;
+    }
+
+    .parsed-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .parsed-section h4 {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .skill-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .skill-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 12px;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 20px;
+      font-size: 13px;
+      color: var(--gray-700);
+    }
+
+    .skill-tag.required {
+      background: rgba(99, 102, 241, 0.1);
+      border-color: var(--primary-light);
+      color: var(--primary-dark);
+    }
+
+    /* Search Options */
+    .search-options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    /* Results Panel */
+    .results-panel {
+      max-height: calc(100vh - 200px);
+      overflow-y: auto;
+    }
+
+    /* Stats Bar */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .stat-card .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--gray-800);
+    }
+
+    .stat-card .stat-label {
+      font-size: 13px;
+      color: var(--gray-500);
+      margin-top: 4px;
+    }
+
+    .stat-card.excellent .stat-value { color: var(--success); }
+    .stat-card.good .stat-value { color: var(--primary); }
+    .stat-card.average .stat-value { color: var(--warning); }
+    .stat-card.poor .stat-value { color: var(--danger); }
+
+    /* Filter Bar */
+    .filter-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-bar input,
+    .filter-bar select {
+      flex: 1;
+      min-width: 150px;
+    }
+
+    /* Candidate Cards */
+    .candidate-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .candidate-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--gray-200);
+      transition: all 0.2s;
+    }
+
+    .candidate-card:hover {
+      border-color: var(--primary-light);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+    }
+
+    .candidate-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+
+    .candidate-info {
+      flex: 1;
+    }
+
+    .candidate-name {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+    }
+
+    .candidate-headline {
+      font-size: 14px;
+      color: var(--gray-600);
+      margin-bottom: 8px;
+    }
+
+    .candidate-meta {
+      display: flex;
+      gap: 16px;
+      font-size: 13px;
+      color: var(--gray-500);
+    }
+
+    .candidate-meta span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .rating-badge {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 16px;
+      background: var(--gray-50);
+      border-radius: 12px;
+      min-width: 80px;
+    }
+
+    .rating-score {
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .rating-score.excellent { color: var(--success); }
+    .rating-score.good { color: var(--primary); }
+    .rating-score.average { color: var(--warning); }
+    .rating-score.poor { color: var(--danger); }
+
+    .rating-stars {
+      color: #fbbf24;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    /* Skills in candidate card */
+    .candidate-skills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .candidate-skills .skill-tag {
+      font-size: 12px;
+      padding: 4px 10px;
+    }
+
+    /* Strengths & Weaknesses */
+    .analysis-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .analysis-section {
+      padding: 12px;
+      border-radius: 8px;
+    }
+
+    .analysis-section.strengths {
+      background: rgba(16, 185, 129, 0.1);
+    }
+
+    .analysis-section.weaknesses {
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .analysis-section h5 {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .analysis-section.strengths h5 {
+      color: var(--success);
+    }
+
+    .analysis-section.weaknesses h5 {
+      color: var(--danger);
+    }
+
+    .analysis-section ul {
+      list-style: none;
+      font-size: 13px;
+      color: var(--gray-700);
+    }
+
+    .analysis-section li {
+      margin-bottom: 6px;
+      padding-left: 16px;
+      position: relative;
+    }
+
+    .analysis-section li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 6px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .analysis-section.strengths li::before {
+      background: var(--success);
+    }
+
+    .analysis-section.weaknesses li::before {
+      background: var(--danger);
+    }
+
+    /* Recommendation */
+    .recommendation {
+      margin-top: 16px;
+      padding: 12px 16px;
+      background: var(--gray-50);
+      border-radius: 8px;
+      font-size: 14px;
+      color: var(--gray-700);
+      border-left: 4px solid var(--primary);
+    }
+
+    /* Actions */
+    .candidate-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .candidate-actions .btn {
+      padding: 8px 16px;
+      font-size: 13px;
+    }
+
+    /* Loading State */
+    .loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      color: var(--gray-500);
+    }
+
+    .loading i {
+      font-size: 48px;
+      color: var(--primary);
+      margin-bottom: 16px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--gray-500);
+    }
+
+    .empty-state i {
+      font-size: 64px;
+      color: var(--gray-300);
+      margin-bottom: 16px;
+    }
+
+    .empty-state h3 {
+      font-size: 18px;
+      color: var(--gray-700);
+      margin-bottom: 8px;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--gray-100);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--gray-300);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--gray-400);
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      transform: translateY(-20px);
+      transition: transform 0.3s;
+    }
+
+    .modal-overlay.active .modal {
+      transform: translateY(0);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-header h3 {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: var(--gray-400);
+      cursor: pointer;
+    }
+
+    .modal-close:hover {
+      color: var(--gray-600);
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--gray-100);
+      padding: 4px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 10px 16px;
+      border: none;
+      background: transparent;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--gray-600);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab.active {
+      background: white;
+      color: var(--primary);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Score Breakdown */
+    .score-breakdown {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .score-item {
+      background: var(--gray-50);
+      padding: 16px;
+      border-radius: 10px;
+    }
+
+    .score-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .score-item-label {
+      font-size: 13px;
+      color: var(--gray-600);
+    }
+
+    .score-item-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .score-bar {
+      height: 6px;
+      background: var(--gray-200);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .score-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
+      border-radius: 3px;
+      transition: width 0.5s ease-out;
+    }
+
+    /* Progress indicator */
+    .progress-ring {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 20px;
+    }
+
+    .progress-ring svg {
+      transform: rotate(-90deg);
+    }
+
+    .progress-ring .bg {
+      fill: none;
+      stroke: var(--gray-200);
+      stroke-width: 8;
+    }
+
+    .progress-ring .progress {
+      fill: none;
+      stroke: var(--primary);
+      stroke-width: 8;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.5s ease-out;
+    }
+
+    .progress-text {
+      position: absolute;
+      font-size: 28px;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <h1><i class="fas fa-user-tie"></i> JD Candidate Finder</h1>
+      <p>AI-powered tool to find and rate candidates based on job descriptions</p>
+    </header>
+
+    <div class="main-grid">
+      <!-- Left Panel - JD Input -->
+      <div class="left-panel">
+        <div class="card">
+          <div class="card-header">
+            <h2><i class="fas fa-file-alt"></i> Job Description</h2>
+          </div>
+
+          <div class="form-group">
+            <label for="jd-input">Paste the Job Description</label>
+            <textarea id="jd-input" placeholder="Paste the full job description here...
+
+Example:
+Senior Software Engineer
+
+We are looking for an experienced Senior Software Engineer to join our team...
+
+Requirements:
+- 5+ years of experience in software development
+- Proficiency in JavaScript, TypeScript, React
+- Experience with Node.js and Express
+- Strong problem-solving skills
+..."></textarea>
+          </div>
+
+          <button class="btn btn-primary btn-block" id="parse-btn">
+            <i class="fas fa-magic"></i> Parse & Analyze JD
+          </button>
+
+          <!-- Parsed JD Display -->
+          <div class="parsed-jd" id="parsed-jd" style="display: none;">
+            <div class="parsed-section">
+              <h4>Job Title</h4>
+              <p id="parsed-title"></p>
+            </div>
+            <div class="parsed-section">
+              <h4>Required Skills</h4>
+              <div class="skill-tags" id="parsed-skills"></div>
+            </div>
+            <div class="parsed-section">
+              <h4>Experience Required</h4>
+              <p id="parsed-experience"></p>
+            </div>
+            <div class="parsed-section">
+              <h4>Education</h4>
+              <p id="parsed-education"></p>
+            </div>
+          </div>
+
+          <!-- Search Options -->
+          <div id="search-section" style="display: none; margin-top: 20px;">
+            <div class="card-header" style="margin-top: 20px;">
+              <h2><i class="fas fa-search"></i> Search Candidates</h2>
+            </div>
+
+            <div class="search-options">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="candidate-count">Number of Candidates</label>
+                <select id="candidate-count">
+                  <option value="50">50 candidates</option>
+                  <option value="100">100 candidates</option>
+                  <option value="200" selected>200 candidates</option>
+                  <option value="300">300 candidates</option>
+                  <option value="400">400 candidates</option>
+                </select>
+              </div>
+            </div>
+
+            <button class="btn btn-success btn-block" id="search-btn">
+              <i class="fas fa-users"></i> Find Candidates
+            </button>
+          </div>
+        </div>
+
+        <!-- Add Candidate Manually -->
+        <div class="card" style="margin-top: 20px;" id="manual-add-section" style="display: none;">
+          <div class="card-header">
+            <h2><i class="fas fa-user-plus"></i> Add Candidate Manually</h2>
+          </div>
+          <button class="btn btn-secondary btn-block" id="add-manual-btn">
+            <i class="fas fa-plus"></i> Add Candidate
+          </button>
+        </div>
+      </div>
+
+      <!-- Right Panel - Results -->
+      <div class="right-panel results-panel">
+        <!-- Initial State -->
+        <div class="card" id="initial-state">
+          <div class="empty-state">
+            <i class="fas fa-clipboard-list"></i>
+            <h3>Start by Adding a Job Description</h3>
+            <p>Paste a job description in the left panel to begin finding candidates</p>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div class="card" id="loading-state" style="display: none;">
+          <div class="loading">
+            <i class="fas fa-spinner"></i>
+            <h3>Searching for Candidates...</h3>
+            <p>This may take a moment</p>
+          </div>
+        </div>
+
+        <!-- Results -->
+        <div id="results-container" style="display: none;">
+          <!-- Stats Bar -->
+          <div class="stats-bar">
+            <div class="stat-card excellent">
+              <div class="stat-value" id="stat-excellent">0</div>
+              <div class="stat-label">Highly Recommended</div>
+            </div>
+            <div class="stat-card good">
+              <div class="stat-value" id="stat-good">0</div>
+              <div class="stat-label">Recommended</div>
+            </div>
+            <div class="stat-card average">
+              <div class="stat-value" id="stat-average">0</div>
+              <div class="stat-label">Consider</div>
+            </div>
+            <div class="stat-card poor">
+              <div class="stat-value" id="stat-poor">0</div>
+              <div class="stat-label">Not Recommended</div>
+            </div>
+          </div>
+
+          <!-- Filter Bar -->
+          <div class="card" style="margin-bottom: 20px;">
+            <div class="filter-bar">
+              <input type="text" id="search-filter" placeholder="Search candidates...">
+              <select id="rating-filter">
+                <option value="">All Ratings</option>
+                <option value="85">Highly Recommended (85+)</option>
+                <option value="70">Recommended (70+)</option>
+                <option value="55">Consider (55+)</option>
+              </select>
+              <select id="sort-filter">
+                <option value="rating-desc">Rating (High to Low)</option>
+                <option value="rating-asc">Rating (Low to High)</option>
+                <option value="experience-desc">Experience (Most)</option>
+                <option value="experience-asc">Experience (Least)</option>
+              </select>
+              <button class="btn btn-success" id="export-btn">
+                <i class="fas fa-download"></i> Export CSV
+              </button>
+            </div>
+          </div>
+
+          <!-- Candidate List -->
+          <div class="candidate-list" id="candidate-list">
+            <!-- Candidates will be rendered here -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Candidate Modal -->
+  <div class="modal-overlay" id="add-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Add Candidate Manually</h3>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <form id="add-candidate-form">
+        <div class="form-group">
+          <label>Full Name *</label>
+          <input type="text" name="name" required>
+        </div>
+        <div class="form-group">
+          <label>Current Role / Headline</label>
+          <input type="text" name="headline">
+        </div>
+        <div class="form-group">
+          <label>LinkedIn / Profile URL</label>
+          <input type="text" name="profileUrl">
+        </div>
+        <div class="form-group">
+          <label>Location</label>
+          <input type="text" name="location">
+        </div>
+        <div class="form-group">
+          <label>Years of Experience</label>
+          <input type="number" name="yearsOfExperience" min="0" max="50">
+        </div>
+        <div class="form-group">
+          <label>Skills (comma separated)</label>
+          <input type="text" name="skills" placeholder="JavaScript, React, Node.js...">
+        </div>
+        <div class="form-group">
+          <label>Education Level</label>
+          <select name="educationLevel">
+            <option value="">Select...</option>
+            <option value="High School">High School</option>
+            <option value="Associates">Associates</option>
+            <option value="Bachelors">Bachelors</option>
+            <option value="Masters">Masters</option>
+            <option value="PhD">PhD</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Summary / Notes</label>
+          <textarea name="summary" rows="3"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">
+          <i class="fas fa-plus"></i> Add & Rate Candidate
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Candidate Detail Modal -->
+  <div class="modal-overlay" id="detail-modal">
+    <div class="modal" style="max-width: 800px;">
+      <div class="modal-header">
+        <h3 id="detail-name">Candidate Name</h3>
+        <button class="modal-close" onclick="closeDetailModal()">&times;</button>
+      </div>
+      <div id="detail-content">
+        <!-- Content will be rendered here -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State
+    let currentJob = null;
+    let allCandidates = [];
+
+    // API Base URL
+    const API_URL = '';
+
+    // DOM Elements
+    const jdInput = document.getElementById('jd-input');
+    const parseBtn = document.getElementById('parse-btn');
+    const parsedJd = document.getElementById('parsed-jd');
+    const searchSection = document.getElementById('search-section');
+    const searchBtn = document.getElementById('search-btn');
+    const candidateCount = document.getElementById('candidate-count');
+    const initialState = document.getElementById('initial-state');
+    const loadingState = document.getElementById('loading-state');
+    const resultsContainer = document.getElementById('results-container');
+    const candidateList = document.getElementById('candidate-list');
+
+    // Event Listeners
+    parseBtn.addEventListener('click', parseJobDescription);
+    searchBtn.addEventListener('click', searchCandidates);
+    document.getElementById('add-manual-btn').addEventListener('click', () => {
+      document.getElementById('add-modal').classList.add('active');
+    });
+    document.getElementById('add-candidate-form').addEventListener('submit', addCandidateManually);
+    document.getElementById('search-filter').addEventListener('input', filterCandidates);
+    document.getElementById('rating-filter').addEventListener('change', filterCandidates);
+    document.getElementById('sort-filter').addEventListener('change', filterCandidates);
+    document.getElementById('export-btn').addEventListener('click', exportCandidates);
+
+    // Parse Job Description
+    async function parseJobDescription() {
+      const jdText = jdInput.value.trim();
+      if (!jdText || jdText.length < 50) {
+        alert('Please enter a job description with at least 50 characters');
+        return;
+      }
+
+      parseBtn.disabled = true;
+      parseBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Parsing...';
+
+      try {
+        const response = await fetch(`${API_URL}/api/jobs`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ description: jdText })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          currentJob = data.job;
+          displayParsedJob(data.job);
+          searchSection.style.display = 'block';
+          document.getElementById('manual-add-section').style.display = 'block';
+        } else {
+          alert(data.error || 'Failed to parse job description');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to parse job description. Please try again.');
+      } finally {
+        parseBtn.disabled = false;
+        parseBtn.innerHTML = '<i class="fas fa-magic"></i> Parse & Analyze JD';
+      }
+    }
+
+    // Display parsed job
+    function displayParsedJob(job) {
+      parsedJd.style.display = 'block';
+      document.getElementById('parsed-title').textContent = job.title;
+
+      const skillsContainer = document.getElementById('parsed-skills');
+      skillsContainer.innerHTML = '';
+      job.requiredSkills.forEach(skill => {
+        const tag = document.createElement('span');
+        tag.className = 'skill-tag required';
+        tag.textContent = skill;
+        skillsContainer.appendChild(tag);
+      });
+
+      document.getElementById('parsed-experience').textContent =
+        job.experience.raw || `${job.experience.min}+ years`;
+
+      const eduLevels = job.education.levels.length > 0
+        ? job.education.levels.join(', ')
+        : 'Not specified';
+      document.getElementById('parsed-education').textContent = eduLevels;
+    }
+
+    // Search Candidates
+    async function searchCandidates() {
+      if (!currentJob) return;
+
+      searchBtn.disabled = true;
+      searchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching...';
+      initialState.style.display = 'none';
+      loadingState.style.display = 'block';
+      resultsContainer.style.display = 'none';
+
+      try {
+        const count = parseInt(candidateCount.value);
+        const response = await fetch(`${API_URL}/api/jobs/${currentJob.id}/search`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ count })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          allCandidates = data.candidates;
+          displayResults(data);
+        } else {
+          alert(data.error || 'Failed to search for candidates');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to search for candidates. Please try again.');
+      } finally {
+        searchBtn.disabled = false;
+        searchBtn.innerHTML = '<i class="fas fa-users"></i> Find Candidates';
+        loadingState.style.display = 'none';
+      }
+    }
+
+    // Display Results
+    function displayResults(data) {
+      resultsContainer.style.display = 'block';
+
+      // Update stats
+      document.getElementById('stat-excellent').textContent = data.summary.highlyRecommended;
+      document.getElementById('stat-good').textContent = data.summary.recommended;
+      document.getElementById('stat-average').textContent = data.summary.consider;
+      document.getElementById('stat-poor').textContent = data.summary.notRecommended;
+
+      renderCandidates(data.candidates);
+    }
+
+    // Render Candidates
+    function renderCandidates(candidates) {
+      candidateList.innerHTML = '';
+
+      if (candidates.length === 0) {
+        candidateList.innerHTML = `
+          <div class="card">
+            <div class="empty-state">
+              <i class="fas fa-user-slash"></i>
+              <h3>No Candidates Found</h3>
+              <p>Try adjusting your filters or search criteria</p>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      candidates.forEach(candidate => {
+        const ratingClass = candidate.rating >= 85 ? 'excellent' :
+                           candidate.rating >= 70 ? 'good' :
+                           candidate.rating >= 55 ? 'average' : 'poor';
+
+        const starsHtml = '★'.repeat(candidate.stars) + '☆'.repeat(5 - candidate.stars);
+
+        const strengthsHtml = (candidate.analysis?.strengths || [])
+          .slice(0, 2)
+          .map(s => `<li>${s.detail}</li>`)
+          .join('');
+
+        const weaknessesHtml = (candidate.analysis?.weaknesses || [])
+          .slice(0, 2)
+          .map(w => `<li>${w.detail}</li>`)
+          .join('');
+
+        const card = document.createElement('div');
+        card.className = 'candidate-card';
+        card.innerHTML = `
+          <div class="candidate-header">
+            <div class="candidate-info">
+              <div class="candidate-name">${candidate.name}</div>
+              <div class="candidate-headline">${candidate.headline || 'No headline'}</div>
+              <div class="candidate-meta">
+                <span><i class="fas fa-briefcase"></i> ${candidate.yearsOfExperience || 0} years</span>
+                <span><i class="fas fa-map-marker-alt"></i> ${candidate.location || 'Unknown'}</span>
+                <span><i class="fas fa-globe"></i> ${candidate.source}</span>
+              </div>
+            </div>
+            <div class="rating-badge">
+              <div class="rating-score ${ratingClass}">${candidate.rating}</div>
+              <div class="rating-stars">${starsHtml}</div>
+            </div>
+          </div>
+
+          <div class="candidate-skills">
+            ${(candidate.skills || []).slice(0, 8).map(skill =>
+              `<span class="skill-tag">${skill}</span>`
+            ).join('')}
+            ${(candidate.skills || []).length > 8 ? `<span class="skill-tag">+${candidate.skills.length - 8} more</span>` : ''}
+          </div>
+
+          <div class="analysis-grid">
+            <div class="analysis-section strengths">
+              <h5><i class="fas fa-check-circle"></i> Strengths</h5>
+              <ul>${strengthsHtml || '<li>No specific strengths identified</li>'}</ul>
+            </div>
+            <div class="analysis-section weaknesses">
+              <h5><i class="fas fa-exclamation-circle"></i> Areas of Concern</h5>
+              <ul>${weaknessesHtml || '<li>No major concerns</li>'}</ul>
+            </div>
+          </div>
+
+          <div class="recommendation">
+            <strong>Recommendation:</strong> ${candidate.recommendation}
+          </div>
+
+          <div class="candidate-actions">
+            <button class="btn btn-primary" onclick="viewDetails('${candidate.id}')">
+              <i class="fas fa-eye"></i> View Details
+            </button>
+            ${candidate.profileUrl ? `
+              <a href="${candidate.profileUrl}" target="_blank" class="btn btn-secondary">
+                <i class="fab fa-linkedin"></i> View Profile
+              </a>
+            ` : ''}
+          </div>
+        `;
+
+        candidateList.appendChild(card);
+      });
+    }
+
+    // Filter Candidates
+    function filterCandidates() {
+      const searchTerm = document.getElementById('search-filter').value.toLowerCase();
+      const minRating = parseInt(document.getElementById('rating-filter').value) || 0;
+      const sortValue = document.getElementById('sort-filter').value;
+
+      let filtered = allCandidates.filter(c => {
+        const matchesSearch = !searchTerm ||
+          c.name.toLowerCase().includes(searchTerm) ||
+          (c.headline || '').toLowerCase().includes(searchTerm) ||
+          (c.skills || []).some(s => s.toLowerCase().includes(searchTerm));
+
+        const matchesRating = c.rating >= minRating;
+
+        return matchesSearch && matchesRating;
+      });
+
+      // Sort
+      const [sortField, sortOrder] = sortValue.split('-');
+      filtered.sort((a, b) => {
+        const aVal = sortField === 'rating' ? a.rating : (a.yearsOfExperience || 0);
+        const bVal = sortField === 'rating' ? b.rating : (b.yearsOfExperience || 0);
+        return sortOrder === 'desc' ? bVal - aVal : aVal - bVal;
+      });
+
+      renderCandidates(filtered);
+    }
+
+    // View Candidate Details
+    function viewDetails(candidateId) {
+      const candidate = allCandidates.find(c => c.id === candidateId);
+      if (!candidate) return;
+
+      const modal = document.getElementById('detail-modal');
+      document.getElementById('detail-name').textContent = candidate.name;
+
+      const ratingClass = candidate.rating >= 85 ? 'excellent' :
+                         candidate.rating >= 70 ? 'good' :
+                         candidate.rating >= 55 ? 'average' : 'poor';
+
+      const starsHtml = '★'.repeat(candidate.stars) + '☆'.repeat(5 - candidate.stars);
+
+      document.getElementById('detail-content').innerHTML = `
+        <div style="text-align: center; margin-bottom: 24px;">
+          <div class="progress-ring" style="position: relative;">
+            <svg width="120" height="120">
+              <circle class="bg" cx="60" cy="60" r="52"></circle>
+              <circle class="progress" cx="60" cy="60" r="52"
+                stroke-dasharray="${2 * Math.PI * 52}"
+                stroke-dashoffset="${2 * Math.PI * 52 * (1 - candidate.rating / 100)}">
+              </circle>
+            </svg>
+            <span class="progress-text ${ratingClass}">${candidate.rating}</span>
+          </div>
+          <div class="rating-stars" style="font-size: 20px;">${starsHtml}</div>
+          <p style="color: var(--gray-600); margin-top: 8px;">${candidate.recommendation}</p>
+        </div>
+
+        <div class="score-breakdown">
+          <div class="score-item">
+            <div class="score-item-header">
+              <span class="score-item-label">Skills Match</span>
+              <span class="score-item-value">${candidate.scores.skillsMatch}%</span>
+            </div>
+            <div class="score-bar">
+              <div class="score-bar-fill" style="width: ${candidate.scores.skillsMatch}%"></div>
+            </div>
+          </div>
+          <div class="score-item">
+            <div class="score-item-header">
+              <span class="score-item-label">Experience</span>
+              <span class="score-item-value">${candidate.scores.experienceMatch}%</span>
+            </div>
+            <div class="score-bar">
+              <div class="score-bar-fill" style="width: ${candidate.scores.experienceMatch}%"></div>
+            </div>
+          </div>
+          <div class="score-item">
+            <div class="score-item-header">
+              <span class="score-item-label">Education</span>
+              <span class="score-item-value">${candidate.scores.educationMatch}%</span>
+            </div>
+            <div class="score-bar">
+              <div class="score-bar-fill" style="width: ${candidate.scores.educationMatch}%"></div>
+            </div>
+          </div>
+          <div class="score-item">
+            <div class="score-item-header">
+              <span class="score-item-label">Keywords</span>
+              <span class="score-item-value">${candidate.scores.keywordMatch}%</span>
+            </div>
+            <div class="score-bar">
+              <div class="score-bar-fill" style="width: ${candidate.scores.keywordMatch}%"></div>
+            </div>
+          </div>
+        </div>
+
+        <h4 style="margin-bottom: 12px;">Profile Information</h4>
+        <div style="background: var(--gray-50); padding: 16px; border-radius: 10px; margin-bottom: 20px;">
+          <p><strong>Current Role:</strong> ${candidate.headline || 'Not specified'}</p>
+          <p><strong>Location:</strong> ${candidate.location || 'Not specified'}</p>
+          <p><strong>Experience:</strong> ${candidate.yearsOfExperience || 0} years</p>
+          <p><strong>Education:</strong> ${candidate.education?.level || 'Not specified'} ${candidate.education?.field ? 'in ' + candidate.education.field : ''}</p>
+          <p><strong>Source:</strong> ${candidate.source}</p>
+          <p><strong>Availability:</strong> ${candidate.availability || 'Not specified'}</p>
+        </div>
+
+        <h4 style="margin-bottom: 12px;">Skills</h4>
+        <div class="skill-tags" style="margin-bottom: 20px;">
+          ${(candidate.skills || []).map(skill => `<span class="skill-tag">${skill}</span>`).join('')}
+        </div>
+
+        <h4 style="margin-bottom: 12px;">Work Experience</h4>
+        <div style="margin-bottom: 20px;">
+          ${(candidate.experience || []).map(exp => `
+            <div style="background: var(--gray-50); padding: 12px; border-radius: 8px; margin-bottom: 8px;">
+              <strong>${exp.title}</strong> at ${exp.company}
+              <span style="color: var(--gray-500); font-size: 13px;"> - ${exp.duration}</span>
+              ${exp.current ? '<span style="background: var(--success); color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-left: 8px;">Current</span>' : ''}
+            </div>
+          `).join('')}
+        </div>
+
+        <div class="analysis-grid">
+          <div class="analysis-section strengths">
+            <h5><i class="fas fa-check-circle"></i> Strengths</h5>
+            <ul>
+              ${(candidate.analysis?.strengths || []).map(s => `<li>${s.detail}</li>`).join('') || '<li>No specific strengths identified</li>'}
+            </ul>
+          </div>
+          <div class="analysis-section weaknesses">
+            <h5><i class="fas fa-exclamation-circle"></i> Areas of Concern</h5>
+            <ul>
+              ${(candidate.analysis?.weaknesses || []).map(w => `<li>${w.detail}</li>`).join('') || '<li>No major concerns</li>'}
+            </ul>
+          </div>
+        </div>
+
+        ${candidate.profileUrl ? `
+          <div style="margin-top: 20px; text-align: center;">
+            <a href="${candidate.profileUrl}" target="_blank" class="btn btn-primary">
+              <i class="fab fa-linkedin"></i> View Full Profile
+            </a>
+          </div>
+        ` : ''}
+      `;
+
+      modal.classList.add('active');
+    }
+
+    // Add Candidate Manually
+    async function addCandidateManually(e) {
+      e.preventDefault();
+      if (!currentJob) {
+        alert('Please parse a job description first');
+        return;
+      }
+
+      const formData = new FormData(e.target);
+      const candidateData = {
+        name: formData.get('name'),
+        headline: formData.get('headline'),
+        profileUrl: formData.get('profileUrl'),
+        location: formData.get('location'),
+        yearsOfExperience: parseInt(formData.get('yearsOfExperience')) || 0,
+        skills: formData.get('skills').split(',').map(s => s.trim()).filter(s => s),
+        education: {
+          level: formData.get('educationLevel')
+        },
+        summary: formData.get('summary')
+      };
+
+      try {
+        const response = await fetch(`${API_URL}/api/jobs/${currentJob.id}/candidates`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(candidateData)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          allCandidates.unshift(data.candidate);
+          filterCandidates();
+          closeModal();
+          e.target.reset();
+
+          // Update stats
+          updateStats();
+        } else {
+          alert(data.error || 'Failed to add candidate');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to add candidate. Please try again.');
+      }
+    }
+
+    // Update stats after adding candidate
+    function updateStats() {
+      const stats = {
+        highlyRecommended: allCandidates.filter(c => c.rating >= 85).length,
+        recommended: allCandidates.filter(c => c.rating >= 70 && c.rating < 85).length,
+        consider: allCandidates.filter(c => c.rating >= 55 && c.rating < 70).length,
+        notRecommended: allCandidates.filter(c => c.rating < 55).length
+      };
+
+      document.getElementById('stat-excellent').textContent = stats.highlyRecommended;
+      document.getElementById('stat-good').textContent = stats.recommended;
+      document.getElementById('stat-average').textContent = stats.consider;
+      document.getElementById('stat-poor').textContent = stats.notRecommended;
+    }
+
+    // Export Candidates
+    function exportCandidates() {
+      if (!currentJob) return;
+      window.location.href = `${API_URL}/api/jobs/${currentJob.id}/export?format=csv`;
+    }
+
+    // Modal functions
+    function closeModal() {
+      document.getElementById('add-modal').classList.remove('active');
+    }
+
+    function closeDetailModal() {
+      document.getElementById('detail-modal').classList.remove('active');
+    }
+
+    // Close modals on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          overlay.classList.remove('active');
+        }
+      });
+    });
+
+    // Close modals on escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+      }
+    });
+  </script>
+</body>
+</html>
