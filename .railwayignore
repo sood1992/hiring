@@ -1,0 +1,9 @@
+# Ignore unnecessary files for Railway deployment
+node_modules
+.git
+.gitignore
+uploads/*
+!uploads/.gitkeep
+.linkedin-cookies.json
+*.md
+.cpanel.yml
