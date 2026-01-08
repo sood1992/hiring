@@ -1196,6 +1196,15 @@ app.post('/api/linkedin/login', async (req, res) => {
     return res.status(400).json({ error: 'Email and password are required' });
   }
 
+  // Set a timeout for the entire login process
+  const loginTimeout = setTimeout(() => {
+    if (linkedInScraper) {
+      linkedInScraper.close().catch(() => {});
+      linkedInScraper = null;
+    }
+    linkedInStatus = { loggedIn: false, email: null };
+  }, 120000); // 2 minute timeout
+
   try {
     // Close existing session if any
     if (linkedInScraper) {
@@ -1209,19 +1218,35 @@ app.post('/api/linkedin/login', async (req, res) => {
     const alreadyLoggedIn = await linkedInScraper.isLoggedIn();
 
     if (alreadyLoggedIn) {
+      clearTimeout(loginTimeout);
       linkedInStatus = { loggedIn: true, email };
       return res.json({ success: true, message: 'Already logged in via saved session' });
     }
 
     // Perform login
     await linkedInScraper.login(email, password);
+    clearTimeout(loginTimeout);
     linkedInStatus = { loggedIn: true, email };
 
     res.json({ success: true, message: 'Login successful' });
   } catch (error) {
+    clearTimeout(loginTimeout);
     console.error('LinkedIn login error:', error);
     linkedInStatus = { loggedIn: false, email: null };
-    res.status(400).json({ error: error.message || 'Login failed' });
+
+    // Provide more specific error messages
+    let errorMessage = 'Login failed';
+    if (error.message.includes('checkpoint')) {
+      errorMessage = 'LinkedIn security check triggered. Try logging into LinkedIn manually first, then retry.';
+    } else if (error.message.includes('timeout')) {
+      errorMessage = 'Login timed out. LinkedIn may be blocking automated access.';
+    } else if (error.message.includes('credentials')) {
+      errorMessage = 'Invalid email or password.';
+    } else {
+      errorMessage = error.message || 'Login failed. LinkedIn may have blocked the attempt.';
+    }
+
+    res.status(400).json({ error: errorMessage });
   }
 });
 

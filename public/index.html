@@ -1494,23 +1494,34 @@ Requirements:
       btn.disabled = true;
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connecting...';
 
+      // Create an AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 second timeout
+
       try {
         const response = await fetch(`${API_URL}/api/linkedin/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
+          body: JSON.stringify({ email, password }),
+          signal: controller.signal
         });
 
+        clearTimeout(timeoutId);
         const data = await response.json();
 
         if (data.success) {
           updateLinkedInUI(true, email);
-          alert('Connected to LinkedIn! A browser window may have opened - please complete any verification if needed.');
+          alert('Connected to LinkedIn successfully!');
         } else {
           alert(data.error || 'Login failed');
         }
       } catch (error) {
-        alert('Connection failed. Make sure the server is running.');
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+          alert('Connection timed out. LinkedIn may be blocking automated login. Try:\n\n1. Log into LinkedIn manually in your browser first\n2. Complete any security verifications\n3. Then try connecting again');
+        } else {
+          alert('Connection failed. Make sure the server is running.');
+        }
       } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="fab fa-linkedin"></i> Connect to LinkedIn';
