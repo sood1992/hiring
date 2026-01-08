@@ -1348,6 +1348,14 @@ Requirements:
     // API Base URL
     const API_URL = '';
 
+    // Helper function to escape HTML to prevent XSS
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
     // DOM Elements
     const jdInput = document.getElementById('jd-input');
     const parseBtn = document.getElementById('parse-btn');
@@ -1405,6 +1413,13 @@ Requirements:
       }
     });
 
+    uploadZone.addEventListener('click', (e) => {
+      // Don't trigger if clicking the button inside (it has its own handler)
+      if (e.target.tagName !== 'BUTTON') {
+        bulkFileInput.click();
+      }
+    });
+
     bulkFileInput.addEventListener('change', (e) => {
       if (e.target.files.length > 0) {
         handleBulkUpload(e.target.files);
@@ -1420,7 +1435,25 @@ Requirements:
       try {
         const response = await fetch(`${API_URL}/api/linkedin/status`);
         const data = await response.json();
-        updateLinkedInUI(data.loggedIn, data.email);
+        if (data.available === false) {
+          // LinkedIn scraper not available
+          const badge = document.getElementById('linkedin-status-badge');
+          badge.innerHTML = '<i class="fas fa-circle"></i> Not Available';
+          badge.style.color = 'var(--warning)';
+          document.getElementById('linkedin-login-form').innerHTML = `
+            <div style="background: rgba(245, 158, 11, 0.1); padding: 16px; border-radius: 8px;">
+              <p style="color: var(--warning); font-weight: 500; margin-bottom: 8px;">
+                <i class="fas fa-exclamation-triangle"></i> Playwright Not Installed
+              </p>
+              <p style="font-size: 13px; color: var(--gray-600);">
+                To enable LinkedIn search, run this on your server:<br>
+                <code style="background: var(--gray-100); padding: 4px 8px; border-radius: 4px; font-size: 12px;">npx playwright install chromium</code>
+              </p>
+            </div>
+          `;
+        } else {
+          updateLinkedInUI(data.loggedIn, data.email);
+        }
       } catch (error) {
         console.log('Could not check LinkedIn status');
       }
@@ -1632,7 +1665,7 @@ Requirements:
         alert('Failed to search for candidates. Please try again.');
       } finally {
         searchBtn.disabled = false;
-        searchBtn.innerHTML = '<i class="fas fa-users"></i> Find Candidates';
+        searchBtn.innerHTML = '<i class="fas fa-users"></i> Find Candidates (Demo Data)';
         loadingState.style.display = 'none';
       }
     }
@@ -1702,16 +1735,16 @@ Requirements:
           <div class="candidate-header">
             <div class="candidate-info">
               <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
-                <div class="candidate-name">${candidate.name}</div>
+                <div class="candidate-name">${escapeHtml(candidate.name)}</div>
                 <button class="shortlist-btn ${candidate.shortlisted ? 'active' : ''}" onclick="toggleShortlist('${candidate.id}')" title="Shortlist">
                   <i class="fas fa-star"></i>
                 </button>
               </div>
-              <div class="candidate-headline">${candidate.headline || 'No headline'}</div>
+              <div class="candidate-headline">${escapeHtml(candidate.headline) || 'No headline'}</div>
               <div class="candidate-meta">
                 <span><i class="fas fa-briefcase"></i> ${candidate.yearsOfExperience || 0} years</span>
-                <span><i class="fas fa-map-marker-alt"></i> ${candidate.location || 'Unknown'}</span>
-                <span><i class="fas fa-globe"></i> ${candidate.source}</span>
+                <span><i class="fas fa-map-marker-alt"></i> ${escapeHtml(candidate.location) || 'Unknown'}</span>
+                <span><i class="fas fa-globe"></i> ${escapeHtml(candidate.source)}</span>
                 <span class="stage-dropdown">
                   <span class="stage-badge stage-${stage}" onclick="toggleStageDropdown('${candidate.id}')" style="cursor: pointer;">
                     ${stage} <i class="fas fa-chevron-down" style="font-size: 8px; margin-left: 4px;"></i>
@@ -1736,7 +1769,7 @@ Requirements:
 
           <div class="candidate-skills">
             ${(candidate.skills || []).slice(0, 8).map(skill =>
-              `<span class="skill-tag">${skill}</span>`
+              `<span class="skill-tag">${escapeHtml(skill)}</span>`
             ).join('')}
             ${(candidate.skills || []).length > 8 ? `<span class="skill-tag">+${candidate.skills.length - 8} more</span>` : ''}
           </div>

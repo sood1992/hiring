@@ -570,7 +570,7 @@ function generateMockCandidates(job, count = 50) {
       name: `${firstName} ${lastName}`,
       headline: `${job.title} at ${currentCompany}`,
       location: locations[Math.floor(Math.random() * locations.length)],
-      profileUrl: `https://linkedin.com/in/${firstName.toLowerCase()}-${lastName.toLowerCase()}-${Math.random().toString(36).substr(2, 5)}`,
+      profileUrl: `https://linkedin.com/in/${firstName.toLowerCase()}-${lastName.toLowerCase()}-${Math.random().toString(36).substring(2, 7)}`,
       source: Math.random() > 0.3 ? 'LinkedIn' : (Math.random() > 0.5 ? 'GitHub' : 'Indeed'),
       skills: [...new Set(candidateSkills)],
       yearsOfExperience: yearsExp,
@@ -1160,7 +1160,15 @@ app.delete('/api/search-history/:id', (req, res) => {
 
 // ============ LINKEDIN INTEGRATION ============
 
-const LinkedInScraper = require('./linkedin-scraper');
+// Try to load LinkedIn scraper - it may fail if playwright not installed
+let LinkedInScraper;
+try {
+  LinkedInScraper = require('./linkedin-scraper');
+} catch (error) {
+  console.log('Note: LinkedIn scraper not available (playwright not installed)');
+  console.log('Run "npx playwright install chromium" to enable LinkedIn integration');
+  LinkedInScraper = null;
+}
 
 // Store LinkedIn session
 let linkedInScraper = null;
@@ -1168,11 +1176,20 @@ let linkedInStatus = { loggedIn: false, email: null };
 
 // Get LinkedIn status
 app.get('/api/linkedin/status', (req, res) => {
-  res.json(linkedInStatus);
+  res.json({
+    ...linkedInStatus,
+    available: LinkedInScraper !== null
+  });
 });
 
 // Login to LinkedIn
 app.post('/api/linkedin/login', async (req, res) => {
+  if (!LinkedInScraper) {
+    return res.status(503).json({
+      error: 'LinkedIn integration not available. Install Playwright: npx playwright install chromium'
+    });
+  }
+
   const { email, password } = req.body;
 
   if (!email || !password) {
