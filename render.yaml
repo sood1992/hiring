@@ -1,0 +1,12 @@
+# Render Blueprint - Deploy with LinkedIn Integration
+services:
+  - type: web
+    name: jd-candidate-finder
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/linkedin/status
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
