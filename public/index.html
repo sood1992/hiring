@@ -748,6 +748,37 @@
       font-size: 28px;
       font-weight: 700;
     }
+
+    /* Status Badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: var(--gray-100);
+    }
+
+    .status-badge i {
+      font-size: 8px;
+    }
+
+    .status-badge.connected {
+      background: rgba(16, 185, 129, 0.1);
+    }
+
+    .status-badge.disconnected {
+      color: var(--gray-400);
+    }
+
+    /* Checkbox styling */
+    input[type="checkbox"] {
+      margin-right: 8px;
+      width: 16px;
+      height: 16px;
+    }
   </style>
 </head>
 <body>
@@ -827,7 +858,70 @@ Requirements:
             </div>
 
             <button class="btn btn-success btn-block" id="search-btn">
-              <i class="fas fa-users"></i> Find Candidates
+              <i class="fas fa-users"></i> Find Candidates (Demo Data)
+            </button>
+          </div>
+        </div>
+
+        <!-- LinkedIn Integration -->
+        <div class="card" style="margin-top: 20px;" id="linkedin-section">
+          <div class="card-header">
+            <h2><i class="fab fa-linkedin" style="color: #0077b5;"></i> LinkedIn Search</h2>
+            <span id="linkedin-status-badge" class="status-badge disconnected">
+              <i class="fas fa-circle"></i> Not Connected
+            </span>
+          </div>
+
+          <!-- Login Form -->
+          <div id="linkedin-login-form">
+            <p style="font-size: 13px; color: var(--gray-500); margin-bottom: 16px;">
+              <i class="fas fa-exclamation-triangle" style="color: var(--warning);"></i>
+              <strong>Warning:</strong> This may violate LinkedIn ToS. Use at your own risk.
+            </p>
+            <div class="form-group">
+              <label>LinkedIn Email</label>
+              <input type="email" id="linkedin-email" placeholder="your@email.com">
+            </div>
+            <div class="form-group">
+              <label>LinkedIn Password</label>
+              <input type="password" id="linkedin-password" placeholder="••••••••">
+            </div>
+            <button class="btn btn-primary btn-block" id="linkedin-login-btn" style="background: #0077b5;">
+              <i class="fab fa-linkedin"></i> Connect to LinkedIn
+            </button>
+          </div>
+
+          <!-- Connected State -->
+          <div id="linkedin-connected" style="display: none;">
+            <div style="background: rgba(16, 185, 129, 0.1); padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+              <p style="color: var(--success); font-weight: 500;">
+                <i class="fas fa-check-circle"></i> Connected as <span id="linkedin-user-email"></span>
+              </p>
+            </div>
+
+            <div class="form-group">
+              <label>Candidates to Find</label>
+              <select id="linkedin-count">
+                <option value="25">25 candidates</option>
+                <option value="50" selected>50 candidates</option>
+                <option value="75">75 candidates</option>
+                <option value="100">100 candidates (max)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>
+                <input type="checkbox" id="linkedin-full-profiles">
+                Get full profile details (slower, more data)
+              </label>
+            </div>
+
+            <button class="btn btn-success btn-block" id="linkedin-search-btn">
+              <i class="fab fa-linkedin"></i> Search LinkedIn
+            </button>
+
+            <button class="btn btn-secondary btn-block" id="linkedin-logout-btn" style="margin-top: 8px;">
+              <i class="fas fa-sign-out-alt"></i> Disconnect
             </button>
           </div>
         </div>
@@ -1014,6 +1108,140 @@ Requirements:
     document.getElementById('rating-filter').addEventListener('change', filterCandidates);
     document.getElementById('sort-filter').addEventListener('change', filterCandidates);
     document.getElementById('export-btn').addEventListener('click', exportCandidates);
+
+    // LinkedIn Event Listeners
+    document.getElementById('linkedin-login-btn').addEventListener('click', linkedinLogin);
+    document.getElementById('linkedin-logout-btn').addEventListener('click', linkedinLogout);
+    document.getElementById('linkedin-search-btn').addEventListener('click', linkedinSearch);
+
+    // Check LinkedIn status on load
+    checkLinkedInStatus();
+
+    // LinkedIn Functions
+    async function checkLinkedInStatus() {
+      try {
+        const response = await fetch(`${API_URL}/api/linkedin/status`);
+        const data = await response.json();
+        updateLinkedInUI(data.loggedIn, data.email);
+      } catch (error) {
+        console.log('Could not check LinkedIn status');
+      }
+    }
+
+    function updateLinkedInUI(loggedIn, email) {
+      const badge = document.getElementById('linkedin-status-badge');
+      const loginForm = document.getElementById('linkedin-login-form');
+      const connectedDiv = document.getElementById('linkedin-connected');
+      const userEmail = document.getElementById('linkedin-user-email');
+
+      if (loggedIn) {
+        badge.innerHTML = '<i class="fas fa-circle"></i> Connected';
+        badge.className = 'status-badge connected';
+        badge.style.color = 'var(--success)';
+        loginForm.style.display = 'none';
+        connectedDiv.style.display = 'block';
+        userEmail.textContent = email;
+      } else {
+        badge.innerHTML = '<i class="fas fa-circle"></i> Not Connected';
+        badge.className = 'status-badge disconnected';
+        badge.style.color = 'var(--gray-400)';
+        loginForm.style.display = 'block';
+        connectedDiv.style.display = 'none';
+      }
+    }
+
+    async function linkedinLogin() {
+      const email = document.getElementById('linkedin-email').value;
+      const password = document.getElementById('linkedin-password').value;
+
+      if (!email || !password) {
+        alert('Please enter both email and password');
+        return;
+      }
+
+      const btn = document.getElementById('linkedin-login-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connecting...';
+
+      try {
+        const response = await fetch(`${API_URL}/api/linkedin/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          updateLinkedInUI(true, email);
+          alert('Connected to LinkedIn! A browser window may have opened - please complete any verification if needed.');
+        } else {
+          alert(data.error || 'Login failed');
+        }
+      } catch (error) {
+        alert('Connection failed. Make sure the server is running.');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fab fa-linkedin"></i> Connect to LinkedIn';
+      }
+    }
+
+    async function linkedinLogout() {
+      try {
+        await fetch(`${API_URL}/api/linkedin/logout`, { method: 'POST' });
+        updateLinkedInUI(false, null);
+      } catch (error) {
+        console.error('Logout error:', error);
+      }
+    }
+
+    async function linkedinSearch() {
+      if (!currentJob) {
+        alert('Please parse a job description first');
+        return;
+      }
+
+      const count = parseInt(document.getElementById('linkedin-count').value);
+      const getFullProfiles = document.getElementById('linkedin-full-profiles').checked;
+
+      const btn = document.getElementById('linkedin-search-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching LinkedIn...';
+
+      initialState.style.display = 'none';
+      loadingState.style.display = 'block';
+      loadingState.querySelector('h3').textContent = 'Searching LinkedIn...';
+      loadingState.querySelector('p').textContent = getFullProfiles
+        ? 'Getting full profiles - this may take several minutes'
+        : 'Finding candidates matching your requirements';
+      resultsContainer.style.display = 'none';
+
+      try {
+        const response = await fetch(`${API_URL}/api/jobs/${currentJob.id}/linkedin-search`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ count, getFullProfiles })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          allCandidates = data.candidates;
+          displayResults(data);
+        } else {
+          alert(data.error || 'LinkedIn search failed');
+          initialState.style.display = 'block';
+        }
+      } catch (error) {
+        console.error('LinkedIn search error:', error);
+        alert('LinkedIn search failed. Check if you are still logged in.');
+        initialState.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fab fa-linkedin"></i> Search LinkedIn';
+        loadingState.style.display = 'none';
+      }
+    }
 
     // Parse Job Description
     async function parseJobDescription() {

@@ -830,6 +830,141 @@ app.get('/api/jobs/:jobId/export', (req, res) => {
   }
 });
 
+// ============ LINKEDIN INTEGRATION ============
+
+const LinkedInScraper = require('./linkedin-scraper');
+
+// Store LinkedIn session
+let linkedInScraper = null;
+let linkedInStatus = { loggedIn: false, email: null };
+
+// Get LinkedIn status
+app.get('/api/linkedin/status', (req, res) => {
+  res.json(linkedInStatus);
+});
+
+// Login to LinkedIn
+app.post('/api/linkedin/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required' });
+  }
+
+  try {
+    // Close existing session if any
+    if (linkedInScraper) {
+      await linkedInScraper.close();
+    }
+
+    linkedInScraper = new LinkedInScraper({ headless: false });
+    await linkedInScraper.init();
+
+    // Check if already logged in via cookies
+    const alreadyLoggedIn = await linkedInScraper.isLoggedIn();
+
+    if (alreadyLoggedIn) {
+      linkedInStatus = { loggedIn: true, email };
+      return res.json({ success: true, message: 'Already logged in via saved session' });
+    }
+
+    // Perform login
+    await linkedInScraper.login(email, password);
+    linkedInStatus = { loggedIn: true, email };
+
+    res.json({ success: true, message: 'Login successful' });
+  } catch (error) {
+    console.error('LinkedIn login error:', error);
+    linkedInStatus = { loggedIn: false, email: null };
+    res.status(400).json({ error: error.message || 'Login failed' });
+  }
+});
+
+// Logout from LinkedIn
+app.post('/api/linkedin/logout', async (req, res) => {
+  try {
+    if (linkedInScraper) {
+      await linkedInScraper.close();
+      linkedInScraper = null;
+    }
+    linkedInStatus = { loggedIn: false, email: null };
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to logout' });
+  }
+});
+
+// Search LinkedIn for candidates
+app.post('/api/jobs/:jobId/linkedin-search', async (req, res) => {
+  const job = jobs.get(req.params.jobId);
+  if (!job) {
+    return res.status(404).json({ error: 'Job not found' });
+  }
+
+  if (!linkedInScraper || !linkedInStatus.loggedIn) {
+    return res.status(401).json({ error: 'Not logged in to LinkedIn. Please login first.' });
+  }
+
+  const { count = 50, getFullProfiles = false, location = '' } = req.body;
+
+  try {
+    console.log(`Starting LinkedIn search for job: ${job.title}`);
+
+    // Search for candidates
+    const linkedInCandidates = await linkedInScraper.searchAndGetDetails(job, {
+      maxResults: Math.min(count, 100), // Limit to 100 for safety
+      getFullProfiles,
+      location
+    });
+
+    // Rate each candidate
+    const ratedCandidates = linkedInCandidates.map(candidate => {
+      const candidateData = {
+        id: uuidv4(),
+        ...candidate,
+        source: 'LinkedIn (Live)'
+      };
+
+      const rating = rateCandidate(candidateData, job);
+
+      return {
+        ...candidateData,
+        jobId: job.id,
+        rating: rating.overallScore,
+        stars: rating.rating,
+        recommendation: rating.recommendation,
+        scores: rating.scores,
+        analysis: rating.analysis
+      };
+    });
+
+    // Sort by rating
+    ratedCandidates.sort((a, b) => b.rating - a.rating);
+
+    // Store candidates
+    for (const candidate of ratedCandidates) {
+      candidates.set(candidate.id, candidate);
+    }
+
+    res.json({
+      success: true,
+      jobId: job.id,
+      totalFound: ratedCandidates.length,
+      candidates: ratedCandidates,
+      source: 'LinkedIn (Live)',
+      summary: {
+        highlyRecommended: ratedCandidates.filter(c => c.rating >= 85).length,
+        recommended: ratedCandidates.filter(c => c.rating >= 70 && c.rating < 85).length,
+        consider: ratedCandidates.filter(c => c.rating >= 55 && c.rating < 70).length,
+        notRecommended: ratedCandidates.filter(c => c.rating < 55).length
+      }
+    });
+  } catch (error) {
+    console.error('LinkedIn search error:', error);
+    res.status(500).json({ error: error.message || 'LinkedIn search failed' });
+  }
+});
+
 // Serve the frontend
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
